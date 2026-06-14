@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mundial 2026 · Fase de Grupos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+  :root{--bg:#0a0e1a;--card:#111827;--border:#1f2d45;--gold:#f5c842;--green:#22c55e;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
+  header{background:linear-gradient(135deg,#0a0e1a,#0f1e3a);border-bottom:2px solid var(--gold);padding:14px 16px;text-align:center;position:sticky;top:0;z-index:100;}
+  .header-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--gold);line-height:1;}
+  .header-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+  .header-badges{display:flex;justify-content:center;gap:6px;margin-top:6px;flex-wrap:wrap;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:20px;text-transform:uppercase;}
+  .badge-gold{background:var(--gold);color:#000;}
+  .badge-green{background:rgba(34,197,94,.2);color:var(--green);border:1px solid var(--green);}
+  #updateBar{background:var(--card);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  #updateStatus{font-size:11px;color:var(--muted);flex:1;}
+  #updateStatus b{color:var(--text);}
+  #refreshBtn{background:var(--gold);color:#000;border:none;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;}
+  #refreshBtn:disabled{opacity:.5;cursor:not-allowed;}
+  .spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--card);scrollbar-width:none;padding:0 12px;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .group-filters{display:flex;overflow-x:auto;gap:6px;padding:10px 14px;scrollbar-width:none;background:var(--bg);}
+  .group-filters::-webkit-scrollbar{display:none;}
+  .gf-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;}
+  .gf-btn.active{background:var(--gold);border-color:var(--gold);color:#000;}
+  .content{padding:0 12px 80px;}
+  .day-block{margin-bottom:20px;}
+  .day-label{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--gold);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .day-num{background:var(--gold);color:#000;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'Inter',sans-serif;}
+  .match-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 12px;margin-bottom:7px;transition:border-color .2s;}
+  .match-card.done{border-color:rgba(34,197,94,.35);}
+  .match-card.live{border-color:rgba(239,68,68,.5);}
+  .match-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .match-group{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+  .match-time{font-size:13px;font-weight:700;color:var(--gold);}
+  .match-teams{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .team{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+  .team-flag{font-size:24px;line-height:1;}
+  .team-name{font-size:11px;font-weight:600;text-align:center;color:var(--text);line-height:1.2;}
+  .vs-block{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:40px;}
+  .vs{font-size:12px;font-weight:700;color:var(--muted);}
+  .score{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);letter-spacing:2px;}
+  .score.live{color:var(--red);}
+  .match-footer{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid var(--border);}
+  .match-venue{font-size:10px;color:var(--muted);flex:1;}
+  .finished{font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;}
+  .live-badge{font-size:9px;font-weight:700;color:var(--red);background:rgba(239,68,68,.15);padding:2px 6px;border-radius:10px;letter-spacing:1px;animation:pulse 1.5s infinite;}
+  .hidden{display:none;}
+  .totals{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 16px;display:flex;justify-content:space-around;z-index:50;}
+  .total-item{text-align:center;}
+  .total-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);}
+  .total-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .group-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .group-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;}
+  .group-card-title{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--gold);letter-spacing:2px;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+  .group-team{font-size:11px;padding:3px 0;color:var(--text);}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-title">⚽ MUNDIAL 2026</div>
+  <div class="header-sub">Fase de Grupos · 72 Partidos</div>
+  <div class="header-badges">
+    <span class="badge badge-gold">🕐 Chihuahua (MDT)</span>
+    <span class="badge badge-green">⚡ Resultados en Vivo</span>
+  </div>
+</header>
+<div id="updateBar">
+  <div id="updateStatus"><span class="spinner"></span> Cargando resultados...</div>
+  <button id="refreshBtn" onclick="fetchScores()" disabled>↻ Actualizar</button>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('calendar')">Calendario</div>
+  <div class="tab" onclick="switchTab('groups')">Grupos</div>
+</div>
+<div class="group-filters" id="groupFilters">
+  <button class="gf-btn active" onclick="filterGroup('all',this)">Todos</button>
+  <button class="gf-btn" onclick="filterGroup('A',this)">Grupo A</button>
+  <button class="gf-btn" onclick="filterGroup('B',this)">Grupo B</button>
+  <button class="gf-btn" onclick="filterGroup('C',this)">Grupo C</button>
+  <button class="gf-btn" onclick="filterGroup('D',this)">Grupo D</button>
+  <button class="gf-btn" onclick="filterGroup('E',this)">Grupo E</button>
+  <button class="gf-btn" onclick="filterGroup('F',this)">Grupo F</button>
+  <button class="gf-btn" onclick="filterGroup('G',this)">Grupo G</button>
+  <button class="gf-btn" onclick="filterGroup('H',this)">Grupo H</button>
+  <button class="gf-btn" onclick="filterGroup('I',this)">Grupo I</button>
+  <button class="gf-btn" onclick="filterGroup('J',this)">Grupo J</button>
+  <button class="gf-btn" onclick="filterGroup('K',this)">Grupo K</button>
+  <button class="gf-btn" onclick="filterGroup('L',this)">Grupo L</button>
+</div>
+<div class="content" id="calendarTab"></div>
+<div class="content hidden" id="groupsTab">
+  <div class="group-info-grid" id="groupsGrid"></div>
+</div>
+<div class="totals">
+  <div class="total-item"><div class="total-num">72</div><div class="total-label">Partidos</div></div>
+  <div class="total-item"><div class="total-num" id="finishedCount">-</div><div class="total-label">Terminados</div></div>
+  <div class="total-item"><div class="total-num" id="liveCount">-</div><div class="total-label">En Vivo</div></div>
+  <div class="total-item"><div class="total-num" id="daysLeft">-</div><div class="total-label">Días fase</div></div>
+</div>
+
+<script>
+// ── SCHEDULE (horario Chihuahua MDT = UTC-6) ─────────────────────────
+const matches = [
+  {id:"A1",date:"Jue 11 Jun",group:"A",j:"J1",home:"🇲🇽",away:"🇿🇦",hname:"México",aname:"Sudáfrica",time:"12:00",venue:"Azteca, Cdmx",hkey:"MEX",akey:"RSA"},
+  {id:"A2",date:"Jue 11 Jun",group:"A",j:"J1",home:"🇰🇷",away:"🇨🇿",hname:"Corea del Sur",aname:"Chequia",time:"19:00",venue:"Estadio Guadalajara",hkey:"KOR",akey:"CZE"},
+  {id:"B1",date:"Vie 12 Jun",group:"B",j:"J1",home:"🇨🇦",away:"🇧🇦",hname:"Canadá",aname:"Bosnia-Herz.",time:"12:00",venue:"Estadio Toronto",hkey:"CAN",akey:"BIH"},
+  {id:"D1",date:"Vie 12 Jun",group:"D",j:"J1",home:"🇺🇸",away:"🇵🇾",hname:"EE.UU.",aname:"Paraguay",time:"19:00",venue:"Estadio Los Ángeles",hkey:"USA",akey:"PAR"},
+  {id:"B2",date:"Sáb 13 Jun",group:"B",j:"J1",home:"🇶🇦",away:"🇨🇭",hname:"Qatar",aname:"Suiza",time:"12:00",venue:"Estadio San Francisco",hkey:"QAT",akey:"SUI"},
+  {id:"C1",date:"Sáb 13 Jun",group:"C",j:"J1",home:"🇧🇷",away:"🇲🇦",hname:"Brasil",aname:"Marruecos",time:"15:00",venue:"Estadio Nueva Jersey",hkey:"BRA",akey:"MAR"},
+  {id:"C2",date:"Sáb 13 Jun",group:"C",j:"J1",home:"🇭🇹",away:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",hname:"Haití",aname:"Escocia",time:"18:00",venue:"Estadio Boston",hkey:"HAI",akey:"SCO"},
+  {id:"D2",date:"Sáb 13 Jun",group:"D",j:"J1",home:"🇦🇺",away:"🇹🇷",hname:"Australia",aname:"Turquía",time:"21:00",venue:"Estadio Vancouver",hkey:"AUS",akey:"TUR"},
+  {id:"E1",date:"Dom 14 Jun",group:"E",j:"J1",home:"🇩🇪",away:"🇨🇼",hname:"Alemania",aname:"Curazao",time:"10:00",venue:"Estadio Houston",hkey:"GER",akey:"CUW"},
+  {id:"E2",date:"Dom 14 Jun",group:"E",j:"J1",home:"🇳🇱",away:"🇯🇵",hname:"Países Bajos",aname:"Japón",time:"13:00",venue:"Estadio Dallas",hkey:"NED",akey:"JPN"},
+  {id:"F1",date:"Dom 14 Jun",group:"F",j:"J1",home:"🇨🇮",away:"🇪🇨",hname:"Costa de Marfil",aname:"Ecuador",time:"16:00",venue:"Estadio Philadelphia",hkey:"CIV",akey:"ECU"},
+  {id:"F2",date:"Dom 14 Jun",group:"F",j:"J1",home:"🇸🇪",away:"🇹🇳",hname:"Suecia",aname:"Túnez",time:"19:00",venue:"Estadio Monterrey",hkey:"SWE",akey:"TUN"},
+  {id:"G1",date:"Lun 15 Jun",group:"G",j:"J1",home:"🇪🇸",away:"🇨🇻",hname:"España",aname:"Cabo Verde",time:"09:00",venue:"Estadio Atlanta",hkey:"ESP",akey:"CPV"},
+  {id:"G2",date:"Lun 15 Jun",group:"G",j:"J1",home:"🇧🇪",away:"🇪🇬",hname:"Bélgica",aname:"Egipto",time:"12:00",venue:"Estadio Seattle",hkey:"BEL",akey:"EGY"},
+  {id:"H1",date:"Lun 15 Jun",group:"H",j:"J1",home:"🇸🇦",away:"🇺🇾",hname:"Arabia Saudita",aname:"Uruguay",time:"15:00",venue:"Estadio Miami",hkey:"KSA",akey:"URU"},
+  {id:"H2",date:"Lun 15 Jun",group:"H",j:"J1",home:"🇮🇷",away:"🇳🇿",hname:"Irán",aname:"Nueva Zelanda",time:"18:00",venue:"Estadio Los Ángeles",hkey:"IRN",akey:"NZL"},
+  {id:"I1",date:"Mar 16 Jun",group:"I",j:"J1",home:"🇫🇷",away:"🇸🇳",hname:"Francia",aname:"Senegal",time:"12:00",venue:"Estadio Nueva Jersey",hkey:"FRA",akey:"SEN"},
+  {id:"I2",date:"Mar 16 Jun",group:"I",j:"J1",home:"🇮🇶",away:"🇳🇴",hname:"Irak",aname:"Noruega",time:"15:00",venue:"Estadio Boston",hkey:"IRQ",akey:"NOR"},
+  {id:"J1",date:"Mar 16 Jun",group:"J",j:"J1",home:"🇦🇷",away:"🇩🇿",hname:"Argentina",aname:"Argelia",time:"18:00",venue:"Estadio Kansas City",hkey:"ARG",akey:"ALG"},
+  {id:"J2",date:"Mar 16 Jun",group:"J",j:"J1",home:"🇦🇹",away:"🇯🇴",hname:"Austria",aname:"Jordania",time:"21:00",venue:"Estadio San Francisco",hkey:"AUT",akey:"JOR"},
+  {id:"K1",date:"Mié 17 Jun",group:"K",j:"J1",home:"🇵🇹",away:"🇨🇩",hname:"Portugal",aname:"RD Congo",time:"10:00",venue:"Estadio Houston",hkey:"POR",akey:"COD"},
+  {id:"K2",date:"Mié 17 Jun",group:"K",j:"J1",home:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",away:"🇭🇷",hname:"Inglaterra",aname:"Croacia",time:"13:00",venue:"Estadio Dallas",hkey:"ENG",akey:"CRO"},
+  {id:"L1",date:"Mié 17 Jun",group:"L",j:"J1",home:"🇬🇭",away:"🇵🇦",hname:"Ghana",aname:"Panamá",time:"16:00",venue:"Estadio Toronto",hkey:"GHA",akey:"PAN"},
+  {id:"L2",date:"Mié 17 Jun",group:"L",j:"J1",home:"🇺🇿",away:"🇨🇴",hname:"Uzbekistán",aname:"Colombia",time:"19:00",venue:"Estadio Cdmx",hkey:"UZB",akey:"COL"},
+  {id:"A3",date:"Jue 18 Jun",group:"A",j:"J2",home:"🇨🇿",away:"🇿🇦",hname:"Chequia",aname:"Sudáfrica",time:"09:00",venue:"Estadio Atlanta",hkey:"CZE",akey:"RSA"},
+  {id:"B3",date:"Jue 18 Jun",group:"B",j:"J2",home:"🇨🇭",away:"🇧🇦",hname:"Suiza",aname:"Bosnia-Herz.",time:"12:00",venue:"Estadio Los Ángeles",hkey:"SUI",akey:"BIH"},
+  {id:"B4",date:"Jue 18 Jun",group:"B",j:"J2",home:"🇨🇦",away:"🇶🇦",hname:"Canadá",aname:"Qatar",time:"15:00",venue:"Estadio Vancouver",hkey:"CAN",akey:"QAT"},
+  {id:"A4",date:"Jue 18 Jun",group:"A",j:"J2",home:"🇲🇽",away:"🇰🇷",hname:"México",aname:"Corea del Sur",time:"18:00",venue:"Estadio Guadalajara",hkey:"MEX",akey:"KOR"},
+  {id:"D3",date:"Vie 19 Jun",group:"D",j:"J2",home:"🇺🇸",away:"🇦🇺",hname:"EE.UU.",aname:"Australia",time:"12:00",venue:"Estadio Seattle",hkey:"USA",akey:"AUS"},
+  {id:"C3",date:"Vie 19 Jun",group:"C",j:"J2",home:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",away:"🇲🇦",hname:"Escocia",aname:"Marruecos",time:"15:00",venue:"Estadio Boston",hkey:"SCO",akey:"MAR"},
+  {id:"C4",date:"Vie 19 Jun",group:"C",j:"J2",home:"🇧🇷",away:"🇭🇹",hname:"Brasil",aname:"Haití",time:"17:30",venue:"Estadio Philadelphia",hkey:"BRA",akey:"HAI"},
+  {id:"D4",date:"Vie 19 Jun",group:"D",j:"J2",home:"🇹🇷",away:"🇵🇾",hname:"Turquía",aname:"Paraguay",time:"20:00",venue:"Estadio San Francisco",hkey:"TUR",akey:"PAR"},
+  {id:"E3",date:"Sáb 20 Jun",group:"E",j:"J2",home:"🇳🇱",away:"🇸🇪",hname:"Países Bajos",aname:"Suecia",time:"10:00",venue:"Estadio Houston",hkey:"NED",akey:"SWE"},
+  {id:"E4",date:"Sáb 20 Jun",group:"E",j:"J2",home:"🇩🇪",away:"🇨🇮",hname:"Alemania",aname:"Costa de Marfil",time:"13:00",venue:"Estadio Toronto",hkey:"GER",akey:"CIV"},
+  {id:"F3",date:"Sáb 20 Jun",group:"F",j:"J2",home:"🇪🇨",away:"🇨🇼",hname:"Ecuador",aname:"Curazao",time:"17:00",venue:"Estadio Kansas City",hkey:"ECU",akey:"CUW"},
+  {id:"F4",date:"Sáb 20 Jun",group:"F",j:"J2",home:"🇹🇳",away:"🇯🇵",hname:"Túnez",aname:"Japón",time:"21:00",venue:"Estadio Monterrey",hkey:"TUN",akey:"JPN"},
+  {id:"G3",date:"Dom 21 Jun",group:"G",j:"J2",home:"🇪🇸",away:"🇸🇦",hname:"España",aname:"Arabia Saudita",time:"09:00",venue:"Estadio Atlanta",hkey:"ESP",akey:"KSA"},
+  {id:"G4",date:"Dom 21 Jun",group:"G",j:"J2",home:"🇧🇪",away:"🇮🇷",hname:"Bélgica",aname:"Irán",time:"12:00",venue:"Estadio Los Ángeles",hkey:"BEL",akey:"IRN"},
+  {id:"H3",date:"Dom 21 Jun",group:"H",j:"J2",home:"🇺🇾",away:"🇨🇻",hname:"Uruguay",aname:"Cabo Verde",time:"15:00",venue:"Estadio Miami",hkey:"URU",akey:"CPV"},
+  {id:"H4",date:"Dom 21 Jun",group:"H",j:"J2",home:"🇳🇿",away:"🇪🇬",hname:"Nueva Zelanda",aname:"Egipto",time:"18:00",venue:"Estadio Vancouver",hkey:"NZL",akey:"EGY"},
+  {id:"J3",date:"Lun 22 Jun",group:"J",j:"J2",home:"🇦🇷",away:"🇦🇹",hname:"Argentina",aname:"Austria",time:"10:00",venue:"Estadio Dallas",hkey:"ARG",akey:"AUT"},
+  {id:"I3",date:"Lun 22 Jun",group:"I",j:"J2",home:"🇫🇷",away:"🇮🇶",hname:"Francia",aname:"Irak",time:"14:00",venue:"Estadio Philadelphia",hkey:"FRA",akey:"IRQ"},
+  {id:"I4",date:"Lun 22 Jun",group:"I",j:"J2",home:"🇳🇴",away:"🇸🇳",hname:"Noruega",aname:"Senegal",time:"17:00",venue:"Estadio Nueva Jersey",hkey:"NOR",akey:"SEN"},
+  {id:"J4",date:"Lun 22 Jun",group:"J",j:"J2",home:"🇯🇴",away:"🇩🇿",hname:"Jordania",aname:"Argelia",time:"20:00",venue:"Estadio San Francisco",hkey:"JOR",akey:"ALG"},
+  {id:"K3",date:"Mar 23 Jun",group:"K",j:"J2",home:"🇵🇹",away:"🇺🇿",hname:"Portugal",aname:"Uzbekistán",time:"10:00",venue:"Estadio Houston",hkey:"POR",akey:"UZB"},
+  {id:"K4",date:"Mar 23 Jun",group:"K",j:"J2",home:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",away:"🇬🇭",hname:"Inglaterra",aname:"Ghana",time:"13:00",venue:"Estadio Boston",hkey:"ENG",akey:"GHA"},
+  {id:"L3",date:"Mar 23 Jun",group:"L",j:"J2",home:"🇵🇦",away:"🇭🇷",hname:"Panamá",aname:"Croacia",time:"16:00",venue:"Estadio Toronto",hkey:"PAN",akey:"CRO"},
+  {id:"L4",date:"Mar 23 Jun",group:"L",j:"J2",home:"🇨🇴",away:"🇨🇩",hname:"Colombia",aname:"RD Congo",time:"19:00",venue:"Estadio Guadalajara",hkey:"COL",akey:"COD"},
+  {id:"B5",date:"Mié 24 Jun",group:"B",j:"J3",home:"🇨🇭",away:"🇨🇦",hname:"Suiza",aname:"Canadá",time:"12:00",venue:"Estadio Vancouver",hkey:"SUI",akey:"CAN"},
+  {id:"B6",date:"Mié 24 Jun",group:"B",j:"J3",home:"🇧🇦",away:"🇶🇦",hname:"Bosnia-Herz.",aname:"Qatar",time:"12:00",venue:"Estadio Seattle",hkey:"BIH",akey:"QAT"},
+  {id:"C5",date:"Mié 24 Jun",group:"C",j:"J3",home:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",away:"🇧🇷",hname:"Escocia",aname:"Brasil",time:"15:00",venue:"Estadio Miami",hkey:"SCO",akey:"BRA"},
+  {id:"C6",date:"Mié 24 Jun",group:"C",j:"J3",home:"🇲🇦",away:"🇭🇹",hname:"Marruecos",aname:"Haití",time:"15:00",venue:"Estadio Atlanta",hkey:"MAR",akey:"HAI"},
+  {id:"A5",date:"Mié 24 Jun",group:"A",j:"J3",home:"🇨🇿",away:"🇲🇽",hname:"Chequia",aname:"México",time:"18:00",venue:"Estadio Cdmx",hkey:"CZE",akey:"MEX"},
+  {id:"A6",date:"Mié 24 Jun",group:"A",j:"J3",home:"🇿🇦",away:"🇰🇷",hname:"Sudáfrica",aname:"Corea del Sur",time:"18:00",venue:"Estadio Guadalajara",hkey:"RSA",akey:"KOR"},
+  {id:"F5",date:"Jue 25 Jun",group:"F",j:"J3",home:"🇨🇼",away:"🇨🇮",hname:"Curazao",aname:"Costa de Marfil",time:"13:00",venue:"Estadio Philadelphia",hkey:"CUW",akey:"CIV"},
+  {id:"E5",date:"Jue 25 Jun",group:"E",j:"J3",home:"🇪🇨",away:"🇩🇪",hname:"Ecuador",aname:"Alemania",time:"13:00",venue:"Estadio Nueva Jersey",hkey:"ECU",akey:"GER"},
+  {id:"F6",date:"Jue 25 Jun",group:"F",j:"J3",home:"🇯🇵",away:"🇸🇪",hname:"Japón",aname:"Suecia",time:"16:00",venue:"Estadio Dallas",hkey:"JPN",akey:"SWE"},
+  {id:"E6",date:"Jue 25 Jun",group:"E",j:"J3",home:"🇹🇳",away:"🇳🇱",hname:"Túnez",aname:"Países Bajos",time:"16:00",venue:"Estadio Kansas City",hkey:"TUN",akey:"NED"},
+  {id:"D5",date:"Jue 25 Jun",group:"D",j:"J3",home:"🇹🇷",away:"🇺🇸",hname:"Turquía",aname:"EE.UU.",time:"19:00",venue:"Estadio Los Ángeles",hkey:"TUR",akey:"USA"},
+  {id:"D6",date:"Jue 25 Jun",group:"D",j:"J3",home:"🇵🇾",away:"🇦🇺",hname:"Paraguay",aname:"Australia",time:"19:00",venue:"Estadio San Francisco",hkey:"PAR",akey:"AUS"},
+  {id:"I5",date:"Vie 26 Jun",group:"I",j:"J3",home:"🇳🇴",away:"🇫🇷",hname:"Noruega",aname:"Francia",time:"12:00",venue:"Estadio Boston",hkey:"NOR",akey:"FRA"},
+  {id:"I6",date:"Vie 26 Jun",group:"I",j:"J3",home:"🇸🇳",away:"🇮🇶",hname:"Senegal",aname:"Irak",time:"12:00",venue:"Estadio Toronto",hkey:"SEN",akey:"IRQ"},
+  {id:"G5",date:"Vie 26 Jun",group:"G",j:"J3",home:"🇨🇻",away:"🇸🇦",hname:"Cabo Verde",aname:"Arabia Saudita",time:"17:00",venue:"Estadio Houston",hkey:"CPV",akey:"KSA"},
+  {id:"H5",date:"Vie 26 Jun",group:"H",j:"J3",home:"🇺🇾",away:"🇪🇸",hname:"Uruguay",aname:"España",time:"17:00",venue:"Estadio Guadalajara",hkey:"URU",akey:"ESP"},
+  {id:"H6",date:"Vie 26 Jun",group:"H",j:"J3",home:"🇪🇬",away:"🇮🇷",hname:"Egipto",aname:"Irán",time:"20:00",venue:"Estadio Seattle",hkey:"EGY",akey:"IRN"},
+  {id:"G6",date:"Vie 26 Jun",group:"G",j:"J3",home:"🇳🇿",away:"🇧🇪",hname:"Nueva Zelanda",aname:"Bélgica",time:"20:00",venue:"Estadio Vancouver",hkey:"NZL",akey:"BEL"},
+  {id:"K5",date:"Sáb 27 Jun",group:"K",j:"J3",home:"🇵🇦",away:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",hname:"Panamá",aname:"Inglaterra",time:"14:00",venue:"Estadio Nueva Jersey",hkey:"PAN",akey:"ENG"},
+  {id:"L5",date:"Sáb 27 Jun",group:"L",j:"J3",home:"🇭🇷",away:"🇬🇭",hname:"Croacia",aname:"Ghana",time:"14:00",venue:"Estadio Philadelphia",hkey:"CRO",akey:"GHA"},
+  {id:"L6",date:"Sáb 27 Jun",group:"L",j:"J3",home:"🇨🇴",away:"🇵🇹",hname:"Colombia",aname:"Portugal",time:"16:30",venue:"Estadio Miami",hkey:"COL",akey:"POR"},
+  {id:"K6",date:"Sáb 27 Jun",group:"K",j:"J3",home:"🇨🇩",away:"🇺🇿",hname:"RD Congo",aname:"Uzbekistán",time:"16:30",venue:"Estadio Atlanta",hkey:"COD",akey:"UZB"},
+  {id:"J5",date:"Sáb 27 Jun",group:"J",j:"J3",home:"🇩🇿",away:"🇦🇹",hname:"Argelia",aname:"Austria",time:"19:00",venue:"Estadio Kansas City",hkey:"ALG",akey:"AUT"},
+  {id:"J6",date:"Sáb 27 Jun",group:"J",j:"J3",home:"🇯🇴",away:"🇦🇷",hname:"Jordania",aname:"Argentina",time:"19:00",venue:"Estadio Dallas",hkey:"JOR",akey:"ARG"},
+];
+
+const groupTeams = {
+  A:["🇲🇽 México","🇿🇦 Sudáfrica","🇰🇷 Corea del Sur","🇨🇿 Chequia"],
+  B:["🇨🇦 Canadá","🇧🇦 Bosnia-Herz.","🇶🇦 Qatar","🇨🇭 Suiza"],
+  C:["🇧🇷 Brasil","🇲🇦 Marruecos","🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escocia","🇭🇹 Haití"],
+  D:["🇺🇸 EE.UU.","🇵🇾 Paraguay","🇦🇺 Australia","🇹🇷 Turquía"],
+  E:["🇩🇪 Alemania","🇨🇼 Curazao","🇨🇮 Costa de Marfil","🇪🇨 Ecuador"],
+  F:["🇸🇪 Suecia","🇹🇳 Túnez","🇯🇵 Japón","🇳🇱 Países Bajos"],
+  G:["🇪🇸 España","🇨🇻 Cabo Verde","🇧🇪 Bélgica","🇪🇬 Egipto"],
+  H:["🇸🇦 Arabia Saudita","🇺🇾 Uruguay","🇮🇷 Irán","🇳🇿 Nueva Zelanda"],
+  I:["🇫🇷 Francia","🇸🇳 Senegal","🇮🇶 Irak","🇳🇴 Noruega"],
+  J:["🇦🇷 Argentina","🇩🇿 Argelia","🇦🇹 Austria","🇯🇴 Jordania"],
+  K:["🇵🇹 Portugal","🇨🇩 RD Congo","🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra","🇭🇷 Croacia"],
+  L:["🇬🇭 Ghana","🇵🇦 Panamá","🇺🇿 Uzbekistán","🇨🇴 Colombia"],
+};
+
+// football-data.org API key
+const FDKEY = 'b8196b3f3bb94a8895e2fd8e1d514274';
+
+let liveData = {};
+let activeGroup = 'all';
+let lastUpdated = null;
+
+async function fetchScores() {
+  const btn = document.getElementById('refreshBtn');
+  const statusEl = document.getElementById('updateStatus');
+  btn.disabled = true;
+  statusEl.innerHTML = '<span class="spinner"></span> Actualizando...';
+
+  try {
+    // football-data.org — competition code WC for World Cup
+    const res = await fetch(
+      'https://api.football-data.org/v4/competitions/WC/matches?season=2026',
+      { headers: { 'X-Auth-Token': FDKEY } }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    liveData = {};
+
+    (data.matches || []).forEach(apiMatch => {
+      const hName = apiMatch.homeTeam?.name || '';
+      const aName = apiMatch.awayTeam?.name || '';
+      const hTLA  = apiMatch.homeTeam?.tla  || '';
+      const aTLA  = apiMatch.awayTeam?.tla  || '';
+
+      // Match by TLA code (most reliable)
+      const local = matches.find(m =>
+        (m.hkey === hTLA && m.akey === aTLA) ||
+        (m.hkey === aTLA && m.akey === hTLA)
+      );
+      if (!local) return;
+
+      const st  = apiMatch.status;
+      const hg  = apiMatch.score?.fullTime?.home;
+      const ag  = apiMatch.score?.fullTime?.away;
+      const hgl = apiMatch.score?.halfTime?.home;
+      const agl = apiMatch.score?.halfTime?.away;
+
+      let score = null, statusKey = 'NS';
+
+      if (st === 'FINISHED') {
+        score = `${hg ?? 0}-${ag ?? 0}`;
+        statusKey = 'FT';
+      } else if (st === 'IN_PLAY' || st === 'PAUSED') {
+        score = `${hgl ?? 0}-${agl ?? 0}`;
+        statusKey = 'LIVE';
+      }
+
+      liveData[local.id] = { score, status: statusKey };
+    });
+
+    lastUpdated = new Date();
+    renderCalendar(activeGroup);
+    updateBar(true, null);
+
+  } catch(e) {
+    console.error(e);
+    updateBar(false, e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function updateBar(ok, errMsg) {
+  const el = document.getElementById('updateStatus');
+  const fin  = matches.filter(m => liveData[m.id]?.status === 'FT').length;
+  const live = matches.filter(m => liveData[m.id]?.status === 'LIVE').length;
+  document.getElementById('finishedCount').textContent = fin;
+  document.getElementById('liveCount').textContent = live;
+  if (ok) {
+    const t = lastUpdated.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    el.innerHTML = `✅ Actualizado <b>${t}</b> · ${fin} terminados${live ? ` · <span style="color:var(--red)">● ${live} en vivo</span>` : ''}`;
+  } else {
+    el.innerHTML = `⚠️ ${errMsg || 'Error'} — toca Actualizar para reintentar`;
+  }
+}
+
+function renderCalendar(groupFilter) {
+  const cal = document.getElementById('calendarTab');
+  const list = groupFilter === 'all' ? matches : matches.filter(m => m.group === groupFilter);
+  const byDay = {};
+  list.forEach(m => { if(!byDay[m.date]) byDay[m.date]=[]; byDay[m.date].push(m); });
+
+  let html = '';
+  Object.entries(byDay).forEach(([day, ms]) => {
+    html += `<div class="day-block"><div class="day-label"><span class="day-num">${ms.length} partido${ms.length>1?'s':''}</span>${day}</div>`;
+    ms.forEach(m => {
+      const d   = liveData[m.id];
+      const st  = d?.status || 'NS';
+      const sc  = d?.score  || null;
+      const isFT   = st === 'FT';
+      const isLive = st === 'LIVE';
+
+      const badge = isFT   ? `<span class="finished">✓ Final</span>`
+                  : isLive ? `<span class="live-badge">● EN VIVO</span>` : '';
+
+      const mid = (isFT || isLive) && sc
+        ? `<span class="score${isLive?' live':''}">${sc}</span>`
+        : `<span class="vs">VS</span>`;
+
+      html += `<div class="match-card${isFT?' done':isLive?' live':''}">
+        <div class="match-top">
+          <span class="match-group">Grupo ${m.group} · ${m.j}</span>
+          <div style="display:flex;align-items:center;gap:6px">${badge}<span class="match-time">${m.time}</span></div>
+        </div>
+        <div class="match-teams">
+          <div class="team"><div class="team-flag">${m.home}</div><div class="team-name">${m.hname}</div></div>
+          <div class="vs-block">${mid}</div>
+          <div class="team"><div class="team-flag">${m.away}</div><div class="team-name">${m.aname}</div></div>
+        </div>
+        <div class="match-footer"><span>📍</span><span class="match-venue">${m.venue}</span></div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  cal.innerHTML = html;
+}
+
+function renderGroups() {
+  document.getElementById('groupsGrid').innerHTML =
+    Object.entries(groupTeams).map(([g,ts]) =>
+      `<div class="group-card"><div class="group-card-title">GRUPO ${g}</div>${ts.map(t=>`<div class="group-team">${t}</div>`).join('')}</div>`
+    ).join('');
+}
+
+function filterGroup(group, btn) {
+  activeGroup = group;
+  document.querySelectorAll('.gf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCalendar(group);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c=>c.classList.add('hidden'));
+  const isCal = tab === 'calendar';
+  document.querySelectorAll('.tab')[isVal ? 0 : 1].classList.add('active');
+  document.getElementById(isVal ? 'calendarTab' : 'groupsTab').classList.remove('hidden');
+  document.getElementById('groupFilters').style.display = isVal ? 'flex' : 'none';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c=>c.classList.add('hidden'));
+  if (tab==='calendar') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('calendarTab').classList.remove('hidden');
+    document.getElementById('groupFilters').style.display='flex';
+  } else {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('groupsTab').classList.remove('hidden');
+    document.getElementById('groupFilters').style.display='none';
+  }
+}
+
+// Days left in group stage
+document.getElementById('daysLeft').textContent =
+  Math.max(0, Math.ceil((new Date('2026-06-27') - new Date()) / 864e5));
+
+renderCalendar('all');
+renderGroups();
+fetchScores();
+setInterval(fetchScores, 60000); // auto-refresh every 60s
+</script>
+</body>
+</html>
